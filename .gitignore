@@ -40,6 +40,10 @@ processing_log.txt
 *.tif
 *.tiff
 
+# Public demo screenshots
+!docs/assets/
+!docs/assets/*.png
+
 # Allow safe synthetic examples
 !examples/
 !examples/synthetic/

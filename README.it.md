@@ -8,6 +8,21 @@ Il progetto e English-first per essere piu leggibile in un portfolio internazion
 
 > Progetto indipendente, non affiliato a OpenAI.
 
+## Demo
+
+La demo usa solo dati sintetici.
+
+![Schermata di revisione di Privacy Doc Anonymizer](docs/assets/review.png)
+
+<details>
+<summary>Altri screenshot</summary>
+
+![Schermata iniziale di Privacy Doc Anonymizer](docs/assets/home.png)
+
+![Report finale di Privacy Doc Anonymizer](docs/assets/final-report.png)
+
+</details>
+
 ## Perche E Utile
 
 I modelli linguistici aiutano ad analizzare documenti, ma molti file aziendali contengono nomi, email, telefoni, indirizzi, codici fiscali, P.IVA, IBAN, fornitori e clienti.

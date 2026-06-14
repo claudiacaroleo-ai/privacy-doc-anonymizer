@@ -8,6 +8,21 @@ This portfolio project was inspired by OpenAI's release of [OpenAI Privacy Filte
 
 > Not affiliated with OpenAI. This is an independent educational and portfolio project.
 
+## Demo
+
+The demo below uses synthetic data only.
+
+![Privacy Doc Anonymizer review screen](docs/assets/review.png)
+
+<details>
+<summary>More screenshots</summary>
+
+![Privacy Doc Anonymizer start screen](docs/assets/home.png)
+
+![Privacy Doc Anonymizer final report](docs/assets/final-report.png)
+
+</details>
+
 ## What It Solves
 
 LLMs are useful for summarizing, classifying, and analyzing documents, but business files often contain names, emails, phone numbers, addresses, fiscal identifiers, suppliers, customers, and other sensitive references.
