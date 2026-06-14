@@ -93,7 +93,6 @@ OpenAI descrive Privacy Filter come un componente di un sistema privacy-by-desig
 - [Architettura](docs/architecture.it.md)
 - [Modello privacy](docs/privacy-model.it.md)
 - [Roadmap](docs/roadmap.it.md)
-- [Bozza post LinkedIn](docs/linkedin-post.it.md)
 
 ## Stato progetto
 
