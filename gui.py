@@ -517,8 +517,8 @@ class App(tk.Tk):
         self.tree.column("redact", width=85, anchor="center", stretch=False)
         self.tree.column("code", width=130, anchor="center", stretch=False)
         self.tree.column("file", width=170)
-        self.tree.column("type", width=170)
-        self.tree.column("text", width=300)
+        self.tree.column("type", width=240)
+        self.tree.column("text", width=320)
         self.tree.column("confidence", width=90, anchor="center", stretch=False)
         self.tree.column("source", width=85, anchor="center", stretch=False)
 
@@ -570,7 +570,7 @@ class App(tk.Tk):
             textvariable=self.var_manual_type,
             values=[name for _, name, _ in DATA_TYPES],
             state="readonly",
-            width=24,
+            width=32,
         )
         manual_combo.pack(side="left", padx=(2, PAD))
 
