@@ -1,5 +1,5 @@
 """
-core.py - logica di anonimizzazione, indipendente dalla GUI.
+core.py - document anonymization logic, independent from the GUI.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from typing import Callable, Optional
 
 
 # ---------------------------------------------------------------------------
-# Strutture dati
+# Data structures
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -25,7 +25,7 @@ class Span:
     end: int
     score: Optional[float]
     will_redact: bool = True
-    codice: str = ""   # es. "PERSONA_1" - assegnato da build_entity_registry
+    code: str = ""   # e.g. "PERSON_1" - assigned by build_entity_registry
     source: str = "opf"  # opf, regex, manual, merged
 
 
@@ -36,12 +36,12 @@ class ProcessingResult:
 
 
 SUPPORTED_EXTENSIONS = (".pdf", ".docx", ".xlsx", ".txt", ".csv", ".tsv")
-SAFE_OUTPUT_SUBDIR = "01_DA_CARICARE_NELL_LLM"
-RESERVED_OUTPUT_SUBDIR = "99_RISERVATO_NON_CARICARE"
+SAFE_OUTPUT_SUBDIR = "01_LLM_SAFE_FILES"
+RESERVED_OUTPUT_SUBDIR = "99_RESERVED_DO_NOT_UPLOAD"
 
 
 # ---------------------------------------------------------------------------
-# Lettura file
+# File extraction
 # ---------------------------------------------------------------------------
 
 def _read_pdf(path: str) -> str:
@@ -49,16 +49,16 @@ def _read_pdf(path: str) -> str:
         import pdfplumber
     except ImportError as exc:
         raise RuntimeError(
-            "Dipendenza mancante: installa pdfplumber con 'py -m pip install pdfplumber'."
+            "Missing dependency: install pdfplumber with 'py -m pip install pdfplumber'."
         ) from exc
 
-    testo = ""
+    text = ""
     with pdfplumber.open(path) as pdf:
         for page in pdf.pages:
             t = page.extract_text()
             if t:
-                testo += t + "\n"
-    return testo
+                text += t + "\n"
+    return text
 
 
 def _table_to_text(table) -> str:
@@ -82,7 +82,7 @@ def _read_docx(path: str) -> str:
         from docx import Document
     except ImportError as exc:
         raise RuntimeError(
-            "Dipendenza mancante: installa python-docx con 'py -m pip install python-docx'."
+            "Missing dependency: install python-docx with 'py -m pip install python-docx'."
         ) from exc
 
     doc = Document(path)
@@ -96,7 +96,7 @@ def _read_docx(path: str) -> str:
         if table_text:
             parts.append(table_text)
 
-    # Header e footer contengono spesso codici cliente, nominativi o riferimenti.
+    # Headers and footers often contain customer codes, names, or references.
     for section in doc.sections:
         for container in (section.header, section.footer):
             for p in container.paragraphs:
@@ -114,7 +114,7 @@ def _format_cell_value(value) -> str:
     if value is None:
         return ""
     if isinstance(value, bool):
-        return "SI" if value else "NO"
+        return "YES" if value else "NO"
     return str(value).strip()
 
 
@@ -149,7 +149,7 @@ def _format_xlsx_row(values: list[str], headers: list[str] | None, row_number: i
             parts.append(value)
     if not parts:
         return ""
-    return f"Riga {row_number}: " + " | ".join(parts)
+    return f"Row {row_number}: " + " | ".join(parts)
 
 
 def _read_xlsx(path: str) -> str:
@@ -157,7 +157,7 @@ def _read_xlsx(path: str) -> str:
         from openpyxl import load_workbook
     except ImportError as exc:
         raise RuntimeError(
-            "Dipendenza mancante: installa openpyxl con 'py -m pip install openpyxl'."
+            "Missing dependency: install openpyxl with 'py -m pip install openpyxl'."
         ) from exc
 
     workbook = load_workbook(path, read_only=True, data_only=True)
@@ -180,7 +180,7 @@ def _read_xlsx(path: str) -> str:
                 if formatted:
                     rows.append(formatted)
             if rows:
-                parts.append(f"[Foglio: {sheet.title}]")
+                parts.append(f"[Sheet: {sheet.title}]")
                 parts.extend(rows)
     finally:
         workbook.close()
@@ -195,7 +195,7 @@ def _read_text(path: str) -> str:
                 return f.read()
         except UnicodeError:
             continue
-    raise ValueError(f"Impossibile leggere {path} con nessun encoding noto")
+    raise ValueError(f"Could not read {path} with any known encoding")
 
 
 def extract_text(path: str) -> str:
@@ -208,11 +208,11 @@ def extract_text(path: str) -> str:
         return _read_xlsx(path)
     if ext in {".txt", ".csv", ".tsv"}:
         return _read_text(path)
-    raise ValueError(f"Formato non supportato: {ext}")
+    raise ValueError(f"Unsupported format: {ext}")
 
 
 # ---------------------------------------------------------------------------
-# Rilevamento PII
+# PII detection
 # ---------------------------------------------------------------------------
 
 def _digits(value: str) -> str:
@@ -241,7 +241,7 @@ _CF_ODD = {
 _CF_EVEN = {str(i): i for i in range(10)} | {chr(ord("A") + i): i for i in range(26)}
 
 
-def _valid_codice_fiscale(value: str) -> bool:
+def _valid_italian_tax_code(value: str) -> bool:
     cf = re.sub(r"\s", "", value).upper()
     if not re.fullmatch(r"[A-Z]{6}\d{2}[A-EHLMPRST]\d{2}[A-Z]\d{3}[A-Z]", cf):
         return False
@@ -293,7 +293,7 @@ _REGEX_RULES: list[RegexRule] = [
     RegexRule(
         "private_id",
         re.compile(r"\b[A-Z]{6}\d{2}[A-EHLMPRST]\d{2}[A-Z]\d{3}[A-Z]\b", re.IGNORECASE),
-        validator=_valid_codice_fiscale,
+        validator=_valid_italian_tax_code,
     ),
     RegexRule(
         "private_id",
@@ -323,7 +323,7 @@ _CONTEXT_ORG_RE = re.compile(
     r")\s*[:=\-]\s*(?P<value>[^\n\r|;]{2,120})"
 )
 
-# Prefissi stradali italiani - usati per isolare la parte da oscurare nell'indirizzo
+# Italian street prefixes used to isolate the street-level part of an address.
 _STREET_RE = re.compile(
     r"\b(Via|Viale|Vicolo|Corso|Piazza|Largo|Strada|Contrada|Borgata|Borgo|"
     r"Localita|Località|Loc\.?|Frazione|Fraz\.?|V\.le|C\.so|P\.za|Sp(?:\.|\b)|"
@@ -362,9 +362,8 @@ def _is_excluded(span: Span, exclude_terms: set[str]) -> bool:
 
 def _refine_address_span(span: Span) -> Span:
     """
-    Riduce uno span private_address alla sola parte stradale (via+numero),
-    lasciando CAP e citta fuori dall'oscuramento.
-    Se non trova un prefisso stradale riconoscibile, lascia lo span invariato.
+    Reduce a private_address span to the street-level part where possible.
+    If no recognizable street prefix is found, keep the original span.
     """
     m = _STREET_RE.search(span.text)
     if not m:
@@ -380,7 +379,7 @@ def _refine_address_span(span: Span) -> Span:
         end=street_end,
         score=span.score,
         will_redact=span.will_redact,
-        codice=span.codice,
+        code=span.code,
         source=span.source,
     )
 
@@ -395,7 +394,7 @@ def _detect_regex_spans(
     labels_filter: set[str],
     exclude_terms: set[str],
 ) -> list[Span]:
-    """Trova PII con regex, lasciando a detect_spans la risoluzione overlap."""
+    """Detect PII with regex rules, leaving overlap resolution to detect_spans."""
     spans: list[Span] = []
     for rule in _REGEX_RULES:
         for m in rule.pattern.finditer(text):
@@ -450,7 +449,7 @@ def _detect_context_spans(
     labels_filter: set[str],
     exclude_terms: set[str],
 ) -> list[Span]:
-    """Rileva automaticamente valori dopo campi come Fornitore o Ragione sociale."""
+    """Detect values after supplier/customer fields such as Fornitore or Ragione sociale."""
     spans: list[Span] = []
     for match in _CONTEXT_ORG_RE.finditer(text):
         raw = match.group("value")
@@ -478,7 +477,7 @@ def _detect_context_spans(
 
 
 def _load_model():
-    from opf import OPF  # importazione lazy: non blocca se OPF manca all'avvio
+    from opf import OPF  # lazy import: keep startup usable when OPF is missing
     return OPF(device="cpu", output_mode="typed")
 
 
@@ -495,7 +494,7 @@ def _span_rank(span: Span) -> tuple[int, float, int]:
 
 
 def dedupe_spans(spans: list[Span]) -> list[Span]:
-    """Rimuove duplicati esatti mantenendo lo span piu affidabile."""
+    """Remove exact duplicates while keeping the most reliable span."""
     best_by_key: dict[tuple, Span] = {}
     for span in spans:
         if span.start < 0 or span.end <= span.start:
@@ -521,8 +520,8 @@ def detect_spans(
     exclude_terms: Optional[set[str]] = None,
 ) -> ProcessingResult:
     """
-    Analizza una lista di file e restituisce tutti gli span rilevati.
-    progress_cb(current, total, filename) viene chiamata ad ogni file.
+    Analyze files and return detected spans.
+    progress_cb(current, total, filename) is called for each file.
     """
     model = _load_model()
     result = ProcessingResult()
@@ -557,7 +556,7 @@ def detect_spans(
                     span.will_redact = False
                 opf_spans.append(span)
 
-            # Aggiunge span da contesto/regex saltando qualunque range gia coperto da OPF.
+            # Add context/regex spans, skipping ranges already covered by OPF.
             context_spans = _detect_context_spans(text, basename, labels_filter, exclusions)
             for cs in context_spans:
                 overlaps_opf = any(_ranges_overlap(cs.start, cs.end, s.start, s.end) for s in opf_spans)
@@ -580,13 +579,12 @@ def detect_spans(
 
 
 # ---------------------------------------------------------------------------
-# Registro entita - assegna codici progressivi univoci su tutti i file
+# Entity registry - assigns stable progressive codes across all files
 # ---------------------------------------------------------------------------
 
 def build_entity_registry(spans: list[Span], redacted_only: bool = False) -> dict[tuple, dict]:
     """
-    Percorre gli span nell'ordine in cui appaiono e assegna a ogni entita
-    normalizzata un codice progressivo per label (es. PERSONA_1, PERSONA_2).
+    Assign a progressive code per normalized entity and label.
     """
     registry: dict[tuple, dict] = {}
     counters: dict[str, int] = {}
@@ -599,19 +597,19 @@ def build_entity_registry(spans: list[Span], redacted_only: bool = False) -> dic
         if key not in registry:
             prefix = LABEL_PREFIX.get(s.label, s.label.upper())
             counters[prefix] = counters.get(prefix, 0) + 1
-            codice = f"{prefix}_{counters[prefix]}"
+            code = f"{prefix}_{counters[prefix]}"
             registry[key] = {
                 "entity_id": len(registry) + 1,
-                "codice": codice,
+                "placeholder": code,
                 "label": s.label,
                 "text": s.text,
             }
-        s.codice = registry[key]["codice"]
+        s.code = registry[key]["placeholder"]
     return registry
 
 
 # ---------------------------------------------------------------------------
-# Redazione
+# Redaction
 # ---------------------------------------------------------------------------
 
 def _merge_redaction_group(text: str, group: list[Span]) -> Span:
@@ -628,7 +626,7 @@ def _merge_redaction_group(text: str, group: list[Span]) -> Span:
         end=end,
         score=best.score,
         will_redact=True,
-        codice=best.codice,
+        code=best.code,
         source="merged",
     )
 
@@ -659,13 +657,13 @@ def _resolve_redaction_spans(text: str, spans: list[Span]) -> list[Span]:
 
 def _redact_text(text: str, spans: list[Span]) -> str:
     for s in sorted(_resolve_redaction_spans(text, spans), key=lambda x: x.start, reverse=True):
-        placeholder = f"[{s.codice}]" if s.codice else f"[{s.label.upper()}]"
+        placeholder = f"[{s.code}]" if s.code else f"[{s.label.upper()}]"
         text = text[:s.start] + placeholder + text[s.end:]
     return text
 
 
 def preview_redacted_text(text: str, spans: list[Span]) -> str:
-    """Restituisce il testo oscurato per anteprima GUI."""
+    """Return redacted text for GUI preview."""
     return _redact_text(text, spans)
 
 
@@ -681,7 +679,7 @@ def _output_path_for(input_path: str, output_dir: str) -> str:
     basename = os.path.basename(input_path)
     stem, ext = os.path.splitext(basename)
     ext_tag = ext.lower().lstrip(".") or "file"
-    return os.path.join(output_dir, f"{stem}_{ext_tag}_anonimo.txt")
+    return os.path.join(output_dir, f"{stem}_{ext_tag}_anonymized.txt")
 
 
 def save_outputs(
@@ -692,8 +690,8 @@ def save_outputs(
     include_kept_in_index: bool = False,
 ) -> list[str]:
     """
-    Salva i file anonimi e i CSV/JSON di mapping.
-    Restituisce la lista di eventuali errori.
+    Save anonymized files and CSV/JSON mapping files.
+    Return a list of errors, if any.
     """
     os.makedirs(output_dir, exist_ok=True)
     safe_dir = safe_output_dir(output_dir)
@@ -703,7 +701,7 @@ def save_outputs(
     errors: list[str] = []
     total = len(files)
 
-    # I mapping sensibili includono di default solo gli span davvero oscurati.
+    # Sensitive mapping files include only actually redacted spans by default.
     registry = build_entity_registry(all_spans, redacted_only=True)
 
     spans_by_file: dict[str, list[Span]] = {}
@@ -738,7 +736,7 @@ def _save_mapping(registry: dict[tuple, dict], output_dir: str) -> None:
 
     csv_path = os.path.join(output_dir, "mapping_entities.csv")
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["entity_id", "codice", "label", "text"])
+        writer = csv.DictWriter(f, fieldnames=["entity_id", "placeholder", "label", "text"])
         writer.writeheader()
         writer.writerows(rows)
 
@@ -749,7 +747,7 @@ def _save_mapping(registry: dict[tuple, dict], output_dir: str) -> None:
 
 def _save_index(spans: list[Span], output_dir: str, include_kept: bool = False) -> None:
     csv_path = os.path.join(output_dir, "index_occurrences.csv")
-    fields = ["file", "codice", "label", "text", "start", "end", "score", "will_redact", "source"]
+    fields = ["file", "placeholder", "label", "text", "start", "end", "score", "will_redact", "source"]
     rows = spans if include_kept else [s for s in spans if s.will_redact]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -757,7 +755,7 @@ def _save_index(spans: list[Span], output_dir: str, include_kept: bool = False) 
         for s in rows:
             writer.writerow({
                 "file": s.file,
-                "codice": s.codice,
+                "placeholder": s.code,
                 "label": s.label,
                 "text": s.text,
                 "start": s.start,
@@ -776,24 +774,24 @@ def _save_log(files: list[str], spans: list[Span], errors: list[str], output_dir
         by_label[s.label] = by_label.get(s.label, 0) + 1
 
     lines = [
-        f"Data elaborazione: {datetime.now().isoformat(timespec='seconds')}",
-        f"File elaborati: {len(files)}",
-        f"Span totali: {len(spans)}",
-        f"Span oscurati: {len(redacted)}",
-        f"Span mantenuti: {len(kept)}",
+        f"Processed at: {datetime.now().isoformat(timespec='seconds')}",
+        f"Processed files: {len(files)}",
+        f"Total spans: {len(spans)}",
+        f"Redacted spans: {len(redacted)}",
+        f"Kept spans: {len(kept)}",
         "",
-        "File input:",
+        "Input files:",
         *[f"- {os.path.basename(path)}" for path in files],
         "",
-        "Oscuramenti per label:",
+        "Redactions by label:",
         *[f"- {label}: {count}" for label, count in sorted(by_label.items())],
         "",
     ]
     if errors:
-        lines.append("Errori:")
+        lines.append("Errors:")
         lines.extend(f"- {err}" for err in errors)
     else:
-        lines.append("Nessun errore riscontrato.")
+        lines.append("No errors.")
 
     with open(os.path.join(output_dir, "processing_log.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
@@ -838,14 +836,14 @@ ALL_KNOWN_LABELS = DEFAULT_LABELS | {
     "private_location",
 }
 
-# Prefisso leggibile per ogni label nel segnaposto
+# Human-readable placeholder prefix for each label.
 LABEL_PREFIX: dict[str, str] = {
-    "private_person":       "PERSONA",
-    "private_organization": "ORGANIZZAZIONE",
+    "private_person":       "PERSON",
+    "private_organization": "ORGANIZATION",
     "private_email":        "EMAIL",
-    "private_phone":        "TELEFONO",
-    "private_address":      "INDIRIZZO",
-    "private_id":           "CODICE",
-    "private_date":         "DATA",
-    "private_location":     "LUOGO",
+    "private_phone":        "PHONE",
+    "private_address":      "ADDRESS",
+    "private_id":           "ID",
+    "private_date":         "DATE",
+    "private_location":     "LOCATION",
 }

@@ -1,37 +1,37 @@
 # Privacy Doc Anonymizer
 
-[English](README.md)
+[English version](README.md)
 
 Applicazione desktop locale per anonimizzare documenti aziendali prima di usarli in workflow con LLM.
 
-Questo progetto portfolio nasce come applicazione pratica ispirata al rilascio di [OpenAI Privacy Filter](https://openai.com/index/introducing-openai-privacy-filter/), modello open-weight per rilevare e oscurare dati personali nel testo. L'idea qui e trasformare quella direzione tecnica in un flusso operativo semplice: rilevamento locale, revisione umana, cartella sicura per l'LLM e mapping separato.
+Il progetto e English-first per essere piu leggibile in un portfolio internazionale, ma include regole e documentazione pensate anche per documenti italiani. Nasce come applicazione pratica ispirata al rilascio di [OpenAI Privacy Filter](https://openai.com/index/introducing-openai-privacy-filter/), modello open-weight per rilevare e oscurare dati personali nel testo.
 
 > Progetto indipendente, non affiliato a OpenAI.
 
-## Perche e utile
+## Perche E Utile
 
-I modelli linguistici sono utili per analizzare documenti, ma molti file aziendali contengono nomi, email, telefoni, indirizzi, codici fiscali, P.IVA, fornitori e clienti.
+I modelli linguistici aiutano ad analizzare documenti, ma molti file aziendali contengono nomi, email, telefoni, indirizzi, codici fiscali, P.IVA, IBAN, fornitori e clienti.
 
-Questa app aiuta a creare un flusso piu sicuro:
+L'app aiuta a creare un flusso piu sicuro:
 
 1. scegli documenti locali;
 2. rilevi possibili dati personali in locale;
-3. controlli i risultati prima di salvare;
-4. esporti solo file anonimizzati in una cartella chiaramente sicura;
-5. tieni mapping e log in una cartella riservata.
+3. controlli i risultati in una GUI semplice;
+4. salvi solo file anonimizzati in una cartella sicura per l'LLM;
+5. tieni mapping e log in una cartella riservata da non caricare.
 
-## Funzionalita principali
+## Funzionalita Principali
 
-- Interfaccia desktop in Python e Tkinter.
-- Rilevamento PII con OpenAI Privacy Filter e regole aggiuntive per casi italiani.
+- Interfaccia desktop in Python e Tkinter, con testi principali in inglese.
+- Regole italian-aware per codici fiscali, P.IVA, IBAN, indirizzi, fornitori e clienti.
+- Integrazione con OpenAI Privacy Filter per il rilevamento PII.
 - Revisione manuale prima del salvataggio.
 - Formati supportati: PDF, DOCX, XLSX, TXT, CSV, TSV.
-- Riconoscimento automatico di campi come `Fornitore`, `Cliente`, `Ragione sociale`, `Azienda`.
 - Output separato:
-  - `01_DA_CARICARE_NELL_LLM`: solo file anonimizzati.
-  - `99_RISERVATO_NON_CARICARE`: mapping, indice audit e log.
-- Placeholder coerenti tra file, per esempio `[PERSONA_1]`, `[EMAIL_1]`, `[ORGANIZZAZIONE_1]`.
-- Mapping locale per eventuale ripristino controllato.
+  - `01_LLM_SAFE_FILES`: solo file anonimizzati.
+  - `99_RESERVED_DO_NOT_UPLOAD`: mapping, indice audit e log.
+- Placeholder coerenti tra file, per esempio `[PERSON_1]`, `[EMAIL_1]`, `[ORGANIZATION_1]`.
+- Mapping locale per capire, in modo controllato, a quale dato originale corrisponde un placeholder.
 - Test automatici su redazione, Excel, output separato e rilevamento fornitori.
 
 ## Flusso
@@ -40,19 +40,21 @@ Questa app aiuta a creare un flusso piu sicuro:
 Documenti originali
         |
         v
-Rilevamento locale + regole italiane
+Rilevamento locale + regole per documenti italiani
         |
         v
-Revisione umana nella GUI
+Revisione umana nella GUI desktop
         |
-        +--> 01_DA_CARICARE_NELL_LLM
+        +--> 01_LLM_SAFE_FILES
         |       file .txt anonimizzati
         |
-        +--> 99_RISERVATO_NON_CARICARE
+        +--> 99_RESERVED_DO_NOT_UPLOAD
                 mapping, indice audit, log
 ```
 
-## Avvio rapido
+## Avvio Rapido
+
+Windows:
 
 ```powershell
 py -m venv .venv
@@ -60,13 +62,13 @@ py -m venv .venv
 py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
 py -m pip install -r requirements-opf.txt
-py verifica_ambiente.py
+py check_environment.py
 py gui.py
 ```
 
-## Dati demo
+## Dati Demo
 
-La cartella `examples/synthetic/` contiene solo dati sintetici. Non caricare nel repository documenti veri, fatture vere, output reali o file di mapping.
+La cartella `examples/synthetic/` contiene solo dati sintetici. Non caricare nel repository documenti veri, fatture vere, output reali, mapping o screenshot con dati personali.
 
 ## Test
 
@@ -74,19 +76,19 @@ La cartella `examples/synthetic/` contiene solo dati sintetici. Non caricare nel
 py -m unittest discover -s tests -v
 ```
 
-## Note privacy
+## Note Privacy
 
 Questo progetto aiuta un workflow privacy-by-design, ma non e una garanzia legale di anonimizzazione.
 
 Regole importanti:
 
-- carica nell'LLM solo i file dentro `01_DA_CARICARE_NELL_LLM`;
-- non caricare mai `99_RISERVATO_NON_CARICARE`;
+- carica nell'LLM solo i file dentro `01_LLM_SAFE_FILES`;
+- non caricare mai `99_RESERVED_DO_NOT_UPLOAD`;
 - controlla sempre i risultati prima di condividere documenti;
 - usa solo dati sintetici nel repository pubblico;
 - non trattare il risultato come certificazione di conformita.
 
-OpenAI descrive Privacy Filter come un componente di un sistema privacy-by-design piu ampio, non come sostituto della revisione umana in contesti sensibili. Questa app mantiene infatti una revisione manuale e separa i file sicuri dal mapping riservato.
+OpenAI descrive Privacy Filter come un componente di un sistema privacy-by-design piu ampio. Questa app mantiene infatti una revisione manuale e separa i file sicuri dal mapping riservato.
 
 ## Documentazione
 
@@ -94,11 +96,9 @@ OpenAI descrive Privacy Filter come un componente di un sistema privacy-by-desig
 - [Modello privacy](docs/privacy-model.it.md)
 - [Roadmap](docs/roadmap.it.md)
 
-## Stato progetto
+## Valore Portfolio
 
-Progetto portfolio / prototipo funzionante.
-
-L'obiettivo e mostrare product thinking, workflow AI attenti alla privacy, sviluppo desktop Python, processing documentale e pratiche ingegneristiche testabili.
+Il progetto mostra product thinking, workflow AI attenti alla privacy, processing documentale locale, sviluppo desktop Python, progettazione per utenti non tecnici e pratiche ingegneristiche testabili.
 
 ## Licenza
 

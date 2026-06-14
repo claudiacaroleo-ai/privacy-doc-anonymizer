@@ -42,10 +42,10 @@ Tkinter keeps the dependency footprint small and makes the application easy to r
 
 ```text
 selected output folder/
-  01_DA_CARICARE_NELL_LLM/
+  01_LLM_SAFE_FILES/
     anonymized .txt files
 
-  99_RISERVATO_NON_CARICARE/
+  99_RESERVED_DO_NOT_UPLOAD/
     mapping_entities.csv
     mapping_entities.json
     index_occurrences.csv

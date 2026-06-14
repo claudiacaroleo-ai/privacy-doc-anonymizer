@@ -8,8 +8,8 @@
 - Added Italian-aware deterministic rules for fiscal identifiers, IBAN, phone numbers, and supplier/customer fields.
 - Added human review before saving.
 - Added output separation:
-  - `01_DA_CARICARE_NELL_LLM`
-  - `99_RISERVATO_NON_CARICARE`
+  - `01_LLM_SAFE_FILES`
+  - `99_RESERVED_DO_NOT_UPLOAD`
 - Added mapping and audit exports.
 - Added unit tests and GitHub Actions workflow.
 - Added bilingual documentation.

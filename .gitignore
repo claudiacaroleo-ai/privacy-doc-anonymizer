@@ -18,9 +18,11 @@ output/
 outputs/
 work/
 01_DA_CARICARE_NELL_LLM/
+01_LLM_SAFE_FILES/
 02_RISPOSTE_LLM/
 03_RISULTATI_RIPRISTINATI_NON_CARICARE/
 99_RISERVATO_NON_CARICARE/
+99_RESERVED_DO_NOT_UPLOAD/
 mapping_entities.*
 index_occurrences.csv
 processing_log.txt

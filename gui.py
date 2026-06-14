@@ -1,8 +1,8 @@
 """
-Interfaccia semplice per l'anonimizzatore documenti.
+Simple desktop interface for Privacy Doc Anonymizer.
 
-La GUI evita termini tecnici: le label interne restano nel core, ma l'utente
-vede categorie comprensibili e scelte guidate.
+The project is English-first for international portfolio visibility. Italian
+business-document rules remain in the core detection layer.
 """
 from __future__ import annotations
 
@@ -16,19 +16,19 @@ from typing import Optional
 import core
 
 
-APP_TITLE = "Anonimizzatore Documenti"
+APP_TITLE = "Privacy Doc Anonymizer"
 PAD = 8
-FILTER_ALL = "Tutti i dati"
+FILTER_ALL = "All data"
 
 DATA_TYPES = [
-    ("private_person", "Nomi di persone", "Mario Rossi, dott.ssa Bianchi"),
-    ("private_email", "Email", "nome@azienda.it"),
-    ("private_phone", "Telefoni", "+39 333 1234567"),
-    ("private_address", "Indirizzi", "Via Roma 12"),
-    ("private_organization", "Aziende ed enti", "fornitori, clienti, societa"),
-    ("private_id", "Codici personali", "Codice fiscale, P.IVA, IBAN"),
-    ("private_date", "Date", "date di nascita o eventi"),
-    ("private_location", "Luoghi", "citta, sedi, localita"),
+    ("private_person", "People names", "Mario Rossi, Dr. Bianchi"),
+    ("private_email", "Emails", "name@company.com"),
+    ("private_phone", "Phone numbers", "+39 333 1234567"),
+    ("private_address", "Addresses", "Via Roma 12"),
+    ("private_organization", "Companies and organizations", "suppliers, customers, entities"),
+    ("private_id", "Personal and business IDs", "tax ID, VAT number, IBAN"),
+    ("private_date", "Dates", "birth dates or event dates"),
+    ("private_location", "Places", "cities, offices, locations"),
 ]
 
 LABEL_NAME = {label: name for label, name, _ in DATA_TYPES}
@@ -36,28 +36,28 @@ NAME_TO_LABEL = {name: label for label, name, _ in DATA_TYPES}
 
 DETECTION_MODES = {
     "recommended": {
-        "title": "Consigliato",
-        "description": "Buon equilibrio: controlli finali facili e pochi dati saltati.",
+        "title": "Recommended",
+        "description": "Balanced review with a practical default.",
         "min_score": 0.20,
     },
     "complete": {
-        "title": "Trova piu dati",
-        "description": "Mostra anche risultati incerti: utile se il documento e delicato.",
+        "title": "Find more data",
+        "description": "Shows uncertain findings too.",
         "min_score": 0.00,
     },
     "selective": {
-        "title": "Meno falsi allarmi",
-        "description": "Mostra solo risultati piu sicuri: rischia di perdere qualcosa.",
+        "title": "Fewer false alarms",
+        "description": "Shows only more confident findings.",
         "min_score": 0.60,
     },
 }
 
 SOURCE_NAME = {
-    "opf": "automatico",
-    "regex": "regola",
-    "context": "campo",
-    "manual": "manuale",
-    "merged": "unito",
+    "opf": "model",
+    "regex": "rule",
+    "context": "field",
+    "manual": "manual",
+    "merged": "merged",
 }
 
 
@@ -73,10 +73,10 @@ def score_label(score: Optional[float]) -> str:
     if score is None:
         return "-"
     if score >= 0.80:
-        return "Alta"
+        return "High"
     if score >= 0.50:
-        return "Media"
-    return "Bassa"
+        return "Medium"
+    return "Low"
 
 
 class App(tk.Tk):
@@ -102,10 +102,6 @@ class App(tk.Tk):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
-    # ------------------------------------------------------------------
-    # Stili
-    # ------------------------------------------------------------------
-
     def _configure_styles(self, style: ttk.Style) -> None:
         bg = "#f5f5f5"
         accent = "#2563eb"
@@ -130,10 +126,6 @@ class App(tk.Tk):
         style.configure("Treeview", font=("Segoe UI", 9), rowheight=24)
         style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"))
 
-    # ------------------------------------------------------------------
-    # Struttura
-    # ------------------------------------------------------------------
-
     def _build_notebook(self) -> None:
         self.notebook = ttk.Notebook(self)
         self.notebook.grid(row=0, column=0, sticky="nsew", padx=PAD, pady=PAD)
@@ -142,28 +134,24 @@ class App(tk.Tk):
         self.tab_review = ttk.Frame(self.notebook)
         self.tab_report = ttk.Frame(self.notebook)
 
-        self.notebook.add(self.tab_config, text="  1. Scegli documenti  ")
-        self.notebook.add(self.tab_review, text="  2. Controlla risultati  ", state="disabled")
-        self.notebook.add(self.tab_report, text="  3. Salvataggio  ", state="disabled")
+        self.notebook.add(self.tab_config, text="  1. Select documents  ")
+        self.notebook.add(self.tab_review, text="  2. Review findings  ", state="disabled")
+        self.notebook.add(self.tab_report, text="  3. Save results  ", state="disabled")
 
         self._build_tab_config()
         self._build_tab_review()
         self._build_tab_report()
-
-    # ------------------------------------------------------------------
-    # Tab 1
-    # ------------------------------------------------------------------
 
     def _build_tab_config(self) -> None:
         f = self.tab_config
         f.columnconfigure(0, weight=1)
         f.rowconfigure(2, weight=1)
 
-        ttk.Label(f, text="Anonimizza documenti in pochi passaggi", style="Title.TLabel").grid(
+        ttk.Label(f, text="Anonymize documents before LLM analysis", style="Title.TLabel").grid(
             row=0, column=0, sticky="w", padx=PAD, pady=(PAD * 2, 2))
         ttk.Label(
             f,
-            text="Scegli una cartella, controlla cosa e stato trovato, poi salva le copie anonime. Gli originali non vengono modificati.",
+            text="Select local documents, review detected data, then save anonymized copies. Original files are not modified.",
             style="Muted.TLabel",
         ).grid(row=1, column=0, sticky="w", padx=PAD, pady=(0, PAD))
 
@@ -181,21 +169,21 @@ class App(tk.Tk):
         left.rowconfigure(7, weight=1)
         right.columnconfigure(0, weight=1)
 
-        ttk.Label(left, text="1. Documenti", style="Title.TLabel").grid(row=0, column=0, columnspan=3, sticky="w")
+        ttk.Label(left, text="1. Documents", style="Title.TLabel").grid(row=0, column=0, columnspan=3, sticky="w")
 
-        ttk.Label(left, text="Cartella da controllare").grid(row=1, column=0, sticky="w", pady=(PAD, 2))
+        ttk.Label(left, text="Folder to scan").grid(row=1, column=0, sticky="w", pady=(PAD, 2))
         self.var_input = tk.StringVar()
         ttk.Entry(left, textvariable=self.var_input).grid(row=1, column=1, sticky="ew", padx=(4, 4), pady=(PAD, 2))
-        ttk.Button(left, text="Scegli", command=self._pick_input).grid(row=1, column=2, pady=(PAD, 2))
+        ttk.Button(left, text="Choose", command=self._pick_input).grid(row=1, column=2, pady=(PAD, 2))
 
-        ttk.Label(left, text="Cartella risultati").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(left, text="Results folder").grid(row=2, column=0, sticky="w", pady=2)
         self.var_output = tk.StringVar()
         ttk.Entry(left, textvariable=self.var_output).grid(row=2, column=1, sticky="ew", padx=(4, 4), pady=2)
-        ttk.Button(left, text="Scegli", command=self._pick_output).grid(row=2, column=2, pady=2)
+        ttk.Button(left, text="Choose", command=self._pick_output).grid(row=2, column=2, pady=2)
 
-        ttk.Label(left, text="Documenti trovati", font=("Segoe UI", 10, "bold")).grid(
+        ttk.Label(left, text="Found documents", font=("Segoe UI", 10, "bold")).grid(
             row=5, column=0, columnspan=3, sticky="w", pady=(PAD * 2, 0))
-        ttk.Label(left, text="Formati: PDF, Word, Excel (.xlsx), TXT, CSV, TSV", style="Muted.TLabel").grid(
+        ttk.Label(left, text="Formats: PDF, Word, Excel (.xlsx), TXT, CSV, TSV", style="Muted.TLabel").grid(
             row=6, column=0, columnspan=3, sticky="w")
         self.listbox_files = tk.Listbox(left, height=8, font=("Segoe UI", 9), selectmode="browse", activestyle="none")
         self.listbox_files.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=(2, 0))
@@ -205,13 +193,13 @@ class App(tk.Tk):
 
         profile_bar = ttk.Frame(left)
         profile_bar.grid(row=9, column=0, columnspan=3, sticky="w", pady=(PAD, 0))
-        ttk.Button(profile_bar, text="Carica impostazioni", command=self._load_profile).pack(side="left")
-        ttk.Button(profile_bar, text="Salva impostazioni", command=self._save_profile).pack(side="left", padx=(4, 0))
+        ttk.Button(profile_bar, text="Load settings", command=self._load_profile).pack(side="left")
+        ttk.Button(profile_bar, text="Save settings", command=self._save_profile).pack(side="left", padx=(4, 0))
 
-        ttk.Label(right, text="2. Dati da nascondere", style="Title.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(right, text="2. Data to anonymize", style="Title.TLabel").grid(row=0, column=0, sticky="w")
         ttk.Label(
             right,
-            text="La scelta consigliata e gia pronta. Potrai cambiare ogni risultato prima del salvataggio.",
+            text="Recommended choices are preselected. You can still review every finding before saving.",
             style="Muted.TLabel",
             wraplength=450,
         ).grid(row=1, column=0, sticky="w", pady=(0, PAD // 2))
@@ -233,13 +221,13 @@ class App(tk.Tk):
 
         btn_bar = ttk.Frame(right)
         btn_bar.grid(row=3, column=0, sticky="w", pady=(PAD // 2, PAD))
-        ttk.Button(btn_bar, text="Scelta consigliata", command=self._select_recommended_labels).pack(side="left")
-        ttk.Button(btn_bar, text="Seleziona tutto", command=self._select_all_labels).pack(side="left", padx=(4, 0))
+        ttk.Button(btn_bar, text="Recommended", command=self._select_recommended_labels).pack(side="left")
+        ttk.Button(btn_bar, text="Select all", command=self._select_all_labels).pack(side="left", padx=(4, 0))
 
         ttk.Separator(right, orient="horizontal").grid(row=4, column=0, sticky="ew", pady=PAD)
 
-        ttk.Label(right, text="3. Tipo di controllo", style="Title.TLabel").grid(row=5, column=0, sticky="w")
-        ttk.Label(right, text="Lascia 'Consigliato' se non sei sicuro.", style="Muted.TLabel").grid(
+        ttk.Label(right, text="3. Detection mode", style="Title.TLabel").grid(row=5, column=0, sticky="w")
+        ttk.Label(right, text="Leave 'Recommended' if you are not sure.", style="Muted.TLabel").grid(
             row=6, column=0, sticky="w")
         self.var_detection_mode = tk.StringVar(value="recommended")
         mode_frame = ttk.Frame(right)
@@ -252,11 +240,10 @@ class App(tk.Tk):
                 variable=self.var_detection_mode,
             ).pack(side="left", padx=(0, PAD))
 
-        ttk.Label(right, text="Parole da lasciare visibili", font=("Segoe UI", 10, "bold")).grid(
-            row=8, column=0, sticky="w")
+        ttk.Label(right, text="Always keep visible", font=("Segoe UI", 10, "bold")).grid(row=8, column=0, sticky="w")
         ttk.Label(
             right,
-            text="Opzionale: esempi come Cuneo, Comune di Alba. Separale con una virgola.",
+            text="Optional: terms such as Cuneo or Comune di Alba. Separate multiple terms with commas.",
             style="Muted.TLabel",
         ).grid(row=9, column=0, sticky="w")
         self.var_exceptions = tk.StringVar()
@@ -270,7 +257,7 @@ class App(tk.Tk):
         self.progressbar.grid(row=0, column=0, sticky="ew", padx=(0, PAD))
         self.btn_analyze = ttk.Button(
             footer,
-            text="Controlla documenti",
+            text="Scan documents",
             style="Accent.TButton",
             command=self._start_analysis,
         )
@@ -289,13 +276,13 @@ class App(tk.Tk):
             var.set(True)
 
     def _pick_input(self) -> None:
-        folder = filedialog.askdirectory(title="Scegli la cartella con i documenti")
+        folder = filedialog.askdirectory(title="Choose the folder with documents")
         if folder:
             self.var_input.set(folder)
             self._refresh_file_list(folder)
 
     def _pick_output(self) -> None:
-        folder = filedialog.askdirectory(title="Scegli dove salvare le copie anonime")
+        folder = filedialog.askdirectory(title="Choose where to save anonymized copies")
         if folder:
             self.var_output.set(folder)
 
@@ -305,16 +292,16 @@ class App(tk.Tk):
             files = core.collect_files(folder)
             unsupported = core.collect_unsupported_files(folder)
         except OSError as exc:
-            self.listbox_files.insert("end", f"Errore lettura cartella: {exc}")
+            self.listbox_files.insert("end", f"Folder read error: {exc}")
             self.label_file_status.config(text="")
             return
 
         self._unsupported_files = unsupported
 
         if not files:
-            self.listbox_files.insert("end", "Nessun documento che posso controllare.")
+            self.listbox_files.insert("end", "No supported documents found.")
         else:
-            self.listbox_files.insert("end", "Verranno controllati:")
+            self.listbox_files.insert("end", "Will be scanned:")
             self.listbox_files.itemconfig("end", foreground="#166534")
             for path in files:
                 self.listbox_files.insert("end", f"  {os.path.basename(path)}")
@@ -322,25 +309,23 @@ class App(tk.Tk):
         if unsupported:
             if files:
                 self.listbox_files.insert("end", "")
-            self.listbox_files.insert("end", "Non supportati, verranno ignorati:")
+            self.listbox_files.insert("end", "Unsupported, will be ignored:")
             self.listbox_files.itemconfig("end", foreground="#b45309")
             for path in unsupported[:12]:
                 self.listbox_files.insert("end", f"  {os.path.basename(path)}")
             if len(unsupported) > 12:
-                self.listbox_files.insert("end", f"  ... altri {len(unsupported) - 12} file")
+                self.listbox_files.insert("end", f"  ... {len(unsupported) - 12} more files")
 
         if files and unsupported:
             self.label_file_status.config(
-                text=f"{len(files)} file verranno controllati. {len(unsupported)} file non supportati saranno ignorati."
+                text=f"{len(files)} files will be scanned. {len(unsupported)} unsupported files will be ignored."
             )
         elif files:
-            self.label_file_status.config(text=f"{len(files)} file pronti per il controllo.")
+            self.label_file_status.config(text=f"{len(files)} files ready for scanning.")
         elif unsupported:
-            self.label_file_status.config(
-                text="Ho trovato file nella cartella, ma nessuno e in un formato supportato."
-            )
+            self.label_file_status.config(text="Files were found, but none are in a supported format.")
         else:
-            self.label_file_status.config(text="La cartella non contiene file.")
+            self.label_file_status.config(text="The folder is empty.")
 
     def _selected_labels(self) -> set[str]:
         return {label for label, var in self._label_vars.items() if var.get()}
@@ -374,51 +359,47 @@ class App(tk.Tk):
 
     def _save_profile(self) -> None:
         path = filedialog.asksaveasfilename(
-            title="Salva impostazioni",
+            title="Save settings",
             defaultextension=".json",
-            filetypes=[("Impostazioni", "*.json"), ("Tutti i file", "*.*")],
+            filetypes=[("Settings", "*.json"), ("All files", "*.*")],
         )
         if not path:
             return
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(self._profile_payload(), f, ensure_ascii=False, indent=2)
-            messagebox.showinfo("Impostazioni", "Impostazioni salvate.")
+            messagebox.showinfo("Settings", "Settings saved.")
         except Exception as exc:
-            messagebox.showerror("Errore", str(exc))
+            messagebox.showerror("Error", str(exc))
 
     def _load_profile(self) -> None:
         path = filedialog.askopenfilename(
-            title="Carica impostazioni",
-            filetypes=[("Impostazioni", "*.json"), ("Tutti i file", "*.*")],
+            title="Load settings",
+            filetypes=[("Settings", "*.json"), ("All files", "*.*")],
         )
         if not path:
             return
         try:
             with open(path, "r", encoding="utf-8") as f:
                 self._apply_profile(json.load(f))
-            messagebox.showinfo("Impostazioni", "Impostazioni caricate.")
+            messagebox.showinfo("Settings", "Settings loaded.")
         except Exception as exc:
-            messagebox.showerror("Errore", str(exc))
-
-    # ------------------------------------------------------------------
-    # Analisi
-    # ------------------------------------------------------------------
+            messagebox.showerror("Error", str(exc))
 
     def _start_analysis(self) -> None:
         input_dir = self.var_input.get().strip()
         if not input_dir or not os.path.isdir(input_dir):
-            messagebox.showerror("Cartella mancante", "Scegli prima la cartella con i documenti.")
+            messagebox.showerror("Missing folder", "Choose the folder with documents first.")
             return
 
         output_dir = self.var_output.get().strip()
         if not output_dir:
-            messagebox.showerror("Cartella mancante", "Scegli dove salvare le copie anonime.")
+            messagebox.showerror("Missing folder", "Choose where to save anonymized copies.")
             return
 
         labels = self._selected_labels()
         if not labels:
-            messagebox.showwarning("Nessun dato scelto", "Seleziona almeno un tipo di dato da nascondere.")
+            messagebox.showwarning("No data selected", "Select at least one type of data to anonymize.")
             return
 
         self._files = core.collect_files(input_dir)
@@ -427,24 +408,24 @@ class App(tk.Tk):
             if self._unsupported_files:
                 sample = "\n".join(f"- {os.path.basename(path)}" for path in self._unsupported_files[:10])
                 messagebox.showwarning(
-                    "Formato non supportato",
-                    "Ho trovato file nella cartella, ma non posso controllarli.\n\n"
-                    "Formati supportati: PDF, Word, Excel .xlsx, TXT, CSV, TSV.\n\n"
-                    f"File ignorati:\n{sample}",
+                    "Unsupported format",
+                    "Files were found, but the app cannot scan them.\n\n"
+                    "Supported formats: PDF, Word, Excel .xlsx, TXT, CSV, TSV.\n\n"
+                    f"Ignored files:\n{sample}",
                 )
             else:
-                messagebox.showwarning("Nessun documento", "Non ho trovato documenti supportati in quella cartella.")
+                messagebox.showwarning("No documents", "No supported documents were found in that folder.")
             return
 
         if self._unsupported_files:
             sample = "\n".join(f"- {os.path.basename(path)}" for path in self._unsupported_files[:8])
-            extra = "" if len(self._unsupported_files) <= 8 else f"\n... e altri {len(self._unsupported_files) - 8} file"
+            extra = "" if len(self._unsupported_files) <= 8 else f"\n... and {len(self._unsupported_files) - 8} more files"
             messagebox.showinfo(
-                "Alcuni file saranno ignorati",
-                "Procedo con i documenti supportati.\n\n"
-                "Questi file non sono in un formato leggibile dall'app e saranno ignorati:\n"
+                "Some files will be ignored",
+                "The app will continue with supported documents.\n\n"
+                "These files are not in a readable format and will be ignored:\n"
                 f"{sample}{extra}\n\n"
-                "Formati supportati: PDF, Word, Excel .xlsx, TXT, CSV, TSV.",
+                "Supported formats: PDF, Word, Excel .xlsx, TXT, CSV, TSV.",
             )
 
         self.btn_analyze.state(["disabled"])
@@ -456,7 +437,7 @@ class App(tk.Tk):
             def progress(current: int, total: int, name: str) -> None:
                 pct = (current / total * 100) if total else 100
                 self.after(0, self.progress_var.set, pct)
-                msg = f"Controllo: {name}" if name else "Controllo completato."
+                msg = f"Scanning: {name}" if name else "Scan complete."
                 self.after(0, self.label_status.config, {"text": msg})
 
             try:
@@ -469,7 +450,7 @@ class App(tk.Tk):
                 )
                 self.after(0, self._on_analysis_done, result)
             except Exception as exc:
-                self.after(0, messagebox.showerror, "Errore durante il controllo", str(exc))
+                self.after(0, messagebox.showerror, "Scan error", str(exc))
                 self.after(0, self.btn_analyze.state, ["!disabled"])
 
         threading.Thread(target=run, daemon=True).start()
@@ -480,27 +461,20 @@ class App(tk.Tk):
         self.btn_analyze.state(["!disabled"])
         if result.errors:
             error_text = "\n".join(result.errors)
-            if "Dipendenza mancante" in error_text:
+            if "Missing dependency" in error_text:
                 error_text += (
-                    "\n\nPer sistemare, chiudi l'app e apri il prompt nella cartella del progetto, poi esegui:\n"
+                    "\n\nTo fix this, close the app, open a terminal in the project folder, and run:\n"
                     "py -m pip install -r requirements.txt\n\n"
-                    "Se manca OpenAI Privacy Filter, esegui anche:\n"
+                    "If OpenAI Privacy Filter is missing, also run:\n"
                     "py -m pip install -r requirements-opf.txt\n\n"
-                    "Dopo l'installazione riapri l'app con:\n"
+                    "Then reopen the app with:\n"
                     "py gui.py"
                 )
-            messagebox.showwarning(
-                "Alcuni documenti non sono stati controllati",
-                error_text,
-            )
+            messagebox.showwarning("Some documents were not scanned", error_text)
 
         self._populate_review_table()
         self.notebook.tab(1, state="normal")
         self.notebook.select(1)
-
-    # ------------------------------------------------------------------
-    # Tab 2
-    # ------------------------------------------------------------------
 
     def _build_tab_review(self) -> None:
         f = self.tab_review
@@ -511,42 +485,42 @@ class App(tk.Tk):
         toolbar = ttk.Frame(f)
         toolbar.grid(row=0, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD, 0))
 
-        ttk.Label(toolbar, text="Mostra:").pack(side="left")
+        ttk.Label(toolbar, text="Show:").pack(side="left")
         self.var_filter_label = tk.StringVar(value=FILTER_ALL)
         self.combo_filter = ttk.Combobox(toolbar, textvariable=self.var_filter_label, state="readonly", width=24)
         self.combo_filter.pack(side="left", padx=(4, PAD))
         self.combo_filter.bind("<<ComboboxSelected>>", lambda _: self._apply_filter())
 
-        ttk.Button(toolbar, text="Nascondi visibili", command=self._select_all).pack(side="left", padx=2)
-        ttk.Button(toolbar, text="Lascia visibili", command=self._deselect_all).pack(side="left", padx=2)
+        ttk.Button(toolbar, text="Anonymize visible", command=self._select_all).pack(side="left", padx=2)
+        ttk.Button(toolbar, text="Keep visible", command=self._deselect_all).pack(side="left", padx=2)
 
         ttk.Label(
             toolbar,
-            text="Clicca nella colonna Nascondi per cambiare decisione.",
+            text="Click the Anonymize column to change a decision.",
             style="Muted.TLabel",
         ).pack(side="right", padx=PAD)
 
-        cols = ("oscura", "codice", "file", "tipo", "testo", "affidabilita", "origine")
+        cols = ("redact", "code", "file", "type", "text", "confidence", "source")
         self.tree = ttk.Treeview(f, columns=cols, show="headings", selectmode="browse")
         headings = {
-            "oscura": "Nascondi",
-            "codice": "Codice",
-            "file": "Documento",
-            "tipo": "Tipo di dato",
-            "testo": "Testo trovato",
-            "affidabilita": "Affidabilita",
-            "origine": "Trovato da",
+            "redact": "Anonymize",
+            "code": "Code",
+            "file": "Document",
+            "type": "Data type",
+            "text": "Found text",
+            "confidence": "Confidence",
+            "source": "Found by",
         }
         for col, title in headings.items():
             self.tree.heading(col, text=title, command=lambda c=col: self._sort_by(c))
 
-        self.tree.column("oscura", width=80, anchor="center", stretch=False)
-        self.tree.column("codice", width=120, anchor="center", stretch=False)
+        self.tree.column("redact", width=85, anchor="center", stretch=False)
+        self.tree.column("code", width=130, anchor="center", stretch=False)
         self.tree.column("file", width=170)
-        self.tree.column("tipo", width=155)
-        self.tree.column("testo", width=300)
-        self.tree.column("affidabilita", width=90, anchor="center", stretch=False)
-        self.tree.column("origine", width=85, anchor="center", stretch=False)
+        self.tree.column("type", width=170)
+        self.tree.column("text", width=300)
+        self.tree.column("confidence", width=90, anchor="center", stretch=False)
+        self.tree.column("source", width=85, anchor="center", stretch=False)
 
         self.tree.tag_configure("redact", background="#fef2f2")
         self.tree.tag_configure("keep", background="#f0fdf4")
@@ -558,16 +532,11 @@ class App(tk.Tk):
 
         self.tree.bind("<ButtonRelease-1>", self._on_tree_click)
 
-        ttk.Separator(f, orient="horizontal").grid(
-            row=2, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD, 0))
+        ttk.Separator(f, orient="horizontal").grid(row=2, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD, 0))
 
         preview_header = ttk.Frame(f)
         preview_header.grid(row=2, column=0, columnspan=2, sticky="ew", padx=PAD)
-        self.label_preview_title = ttk.Label(
-            preview_header,
-            text="Anteprima: seleziona una riga",
-            style="Muted.TLabel",
-        )
+        self.label_preview_title = ttk.Label(preview_header, text="Preview: select a row", style="Muted.TLabel")
         self.label_preview_title.pack(side="left", pady=(2, 0))
 
         preview_frame = ttk.Frame(f)
@@ -576,37 +545,36 @@ class App(tk.Tk):
         preview_frame.columnconfigure(1, weight=1)
         preview_frame.rowconfigure(1, weight=1)
 
-        ttk.Label(preview_frame, text="Originale").grid(row=0, column=0, sticky="w")
-        ttk.Label(preview_frame, text="Come verra salvato").grid(row=0, column=1, sticky="w", padx=(PAD, 0))
+        ttk.Label(preview_frame, text="Original").grid(row=0, column=0, sticky="w")
+        ttk.Label(preview_frame, text="Will be saved as").grid(row=0, column=1, sticky="w", padx=(PAD, 0))
 
         self.preview_original = self._build_preview_text(preview_frame)
         self.preview_redacted = self._build_preview_text(preview_frame)
         self.preview_original.grid(row=1, column=0, sticky="nsew", pady=(2, 0))
         self.preview_redacted.grid(row=1, column=1, sticky="nsew", padx=(PAD, 0), pady=(2, 0))
 
-        ttk.Separator(f, orient="horizontal").grid(
-            row=4, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD, 0))
+        ttk.Separator(f, orient="horizontal").grid(row=4, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD, 0))
 
         manual_frame = ttk.Frame(f)
         manual_frame.grid(row=5, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(2, 0))
 
-        ttk.Label(manual_frame, text="Manca qualcosa?", font=("Segoe UI", 9, "bold")).pack(side="left")
-        ttk.Label(manual_frame, text=" Testo da nascondere:").pack(side="left")
+        ttk.Label(manual_frame, text="Missing something?", font=("Segoe UI", 9, "bold")).pack(side="left")
+        ttk.Label(manual_frame, text=" Text to anonymize:").pack(side="left")
         self.var_manual_text = tk.StringVar()
         ttk.Entry(manual_frame, textvariable=self.var_manual_text, width=28).pack(side="left", padx=(2, PAD))
 
-        ttk.Label(manual_frame, text="Tipo:").pack(side="left")
+        ttk.Label(manual_frame, text="Type:").pack(side="left")
         self.var_manual_type = tk.StringVar(value=display_label("private_organization"))
         manual_combo = ttk.Combobox(
             manual_frame,
             textvariable=self.var_manual_type,
             values=[name for _, name, _ in DATA_TYPES],
             state="readonly",
-            width=22,
+            width=24,
         )
         manual_combo.pack(side="left", padx=(2, PAD))
 
-        ttk.Button(manual_frame, text="Aggiungi", command=self._add_manual_span).pack(side="left")
+        ttk.Button(manual_frame, text="Add", command=self._add_manual_span).pack(side="left")
 
         self.label_manual_status = ttk.Label(manual_frame, text="", foreground="#2563eb")
         self.label_manual_status.pack(side="left", padx=(PAD, 0))
@@ -615,7 +583,7 @@ class App(tk.Tk):
         footer.grid(row=6, column=0, columnspan=2, sticky="ew", padx=PAD, pady=(PAD // 2, PAD))
         self.label_summary = ttk.Label(footer, text="")
         self.label_summary.pack(side="left")
-        self.btn_save = ttk.Button(footer, text="Salva copie anonime", style="Accent.TButton", command=self._start_save)
+        self.btn_save = ttk.Button(footer, text="Save anonymized copies", style="Accent.TButton", command=self._start_save)
         self.btn_save.pack(side="right")
 
     def _build_preview_text(self, parent: ttk.Frame) -> tk.Text:
@@ -651,19 +619,19 @@ class App(tk.Tk):
 
     def _sort_key(self, idx: int, col: str):
         span = self._spans[idx]
-        if col == "oscura":
+        if col == "redact":
             return span.will_redact
-        if col == "codice":
-            return span.codice
+        if col == "code":
+            return span.code
         if col == "file":
             return span.file.casefold()
-        if col == "tipo":
+        if col == "type":
             return display_label(span.label).casefold()
-        if col == "testo":
+        if col == "text":
             return span.text.casefold()
-        if col == "affidabilita":
+        if col == "confidence":
             return span.score if span.score is not None else -1
-        if col == "origine":
+        if col == "source":
             return SOURCE_NAME.get(span.source, span.source).casefold()
         return idx
 
@@ -673,7 +641,7 @@ class App(tk.Tk):
             self._insert_tree_row(idx, self._spans[idx])
 
     def _insert_tree_row(self, idx: int, span: core.Span) -> None:
-        check = "Si" if span.will_redact else "No"
+        check = "Yes" if span.will_redact else "No"
         tag = "redact" if span.will_redact else "keep"
         text = span.text if len(span.text) <= 140 else span.text[:137] + "..."
         self.tree.insert(
@@ -682,7 +650,7 @@ class App(tk.Tk):
             iid=str(idx),
             values=(
                 check,
-                span.codice,
+                span.code,
                 span.file,
                 display_label(span.label),
                 text,
@@ -733,13 +701,13 @@ class App(tk.Tk):
             try:
                 self._text_cache[basename] = core.extract_text(filepath)
             except Exception as exc:
-                self._text_cache[basename] = f"Errore lettura: {exc}"
+                self._text_cache[basename] = f"Read error: {exc}"
 
         text = self._text_cache[basename]
         file_spans = [s for s in self._spans if s.file == basename]
         redacted = core.preview_redacted_text(text, file_spans)
 
-        self.label_preview_title.config(text=f"Anteprima: {basename}")
+        self.label_preview_title.config(text=f"Preview: {basename}")
         self._set_text(self.preview_original, text)
         self._set_text(self.preview_redacted, redacted)
 
@@ -778,21 +746,21 @@ class App(tk.Tk):
 
     def _rebuild_codes(self) -> None:
         for span in self._spans:
-            span.codice = ""
+            span.code = ""
         core.build_entity_registry(self._spans, redacted_only=True)
 
     def _update_summary(self) -> None:
         total = len(self._spans)
         to_redact = sum(1 for s in self._spans if s.will_redact)
         self.label_summary.config(
-            text=f"Dati trovati: {total}  |  Da nascondere: {to_redact}  |  Lasciati visibili: {total - to_redact}"
+            text=f"Findings: {total}  |  To anonymize: {to_redact}  |  Kept visible: {total - to_redact}"
         )
 
     def _add_manual_span(self) -> None:
         search_text = self.var_manual_text.get().strip()
         label = label_from_display(self.var_manual_type.get().strip())
         if not search_text:
-            self.label_manual_status.config(text="Scrivi il testo da cercare.", foreground="#dc2626")
+            self.label_manual_status.config(text="Enter text to search for.", foreground="#dc2626")
             return
 
         added = 0
@@ -829,25 +797,21 @@ class App(tk.Tk):
                 start = pos + max(1, len(search_text))
 
         if added == 0:
-            self.label_manual_status.config(text=f'"{search_text}" non trovato.', foreground="#dc2626")
+            self.label_manual_status.config(text=f'"{search_text}" was not found.', foreground="#dc2626")
             return
 
         self._spans = core.dedupe_spans(self._spans)
         self._rebuild_codes()
         self._populate_review_table()
-        self.label_manual_status.config(text=f"Aggiunto {added} volta/e.", foreground="#16a34a")
+        self.label_manual_status.config(text=f"Added {added} occurrence(s).", foreground="#16a34a")
         self.var_manual_text.set("")
         if self._preview_file:
             self._show_preview(self._preview_file)
 
-    # ------------------------------------------------------------------
-    # Salvataggio
-    # ------------------------------------------------------------------
-
     def _start_save(self) -> None:
         output_dir = self.var_output.get().strip()
         if not output_dir:
-            messagebox.showerror("Cartella mancante", "Scegli dove salvare le copie anonime.")
+            messagebox.showerror("Missing folder", "Choose where to save anonymized copies.")
             return
 
         self.btn_save.state(["disabled"])
@@ -859,7 +823,7 @@ class App(tk.Tk):
             def progress(current: int, total: int, name: str) -> None:
                 pct = (current / total * 100) if total else 100
                 self.after(0, self.progress_var.set, pct)
-                msg = f"Salvataggio: {name}" if name else "Salvataggio completato."
+                msg = f"Saving: {name}" if name else "Save complete."
                 self.after(0, self.label_status.config, {"text": msg})
 
             try:
@@ -872,7 +836,7 @@ class App(tk.Tk):
                 )
                 self.after(0, self._on_save_done, errors, output_dir)
             except Exception as exc:
-                self.after(0, messagebox.showerror, "Errore salvataggio", str(exc))
+                self.after(0, messagebox.showerror, "Save error", str(exc))
             finally:
                 self.after(0, self.btn_save.state, ["!disabled"])
                 self.after(0, self.btn_analyze.state, ["!disabled"])
@@ -884,16 +848,12 @@ class App(tk.Tk):
         self.notebook.tab(2, state="normal")
         self.notebook.select(2)
 
-    # ------------------------------------------------------------------
-    # Tab 3
-    # ------------------------------------------------------------------
-
     def _build_tab_report(self) -> None:
         f = self.tab_report
         f.columnconfigure(0, weight=1)
         f.rowconfigure(1, weight=1)
 
-        ttk.Label(f, text="Copie anonime salvate", style="Title.TLabel").grid(
+        ttk.Label(f, text="Anonymized copies saved", style="Title.TLabel").grid(
             row=0, column=0, sticky="w", padx=PAD * 2, pady=(PAD * 2, PAD))
 
         self.text_report = tk.Text(
@@ -908,34 +868,34 @@ class App(tk.Tk):
 
         footer = ttk.Frame(f)
         footer.grid(row=2, column=0, sticky="ew", padx=PAD, pady=(0, PAD))
-        ttk.Button(footer, text="Apri cartella da caricare", command=self._open_output_folder).pack(side="left")
-        ttk.Button(footer, text="Nuovo lavoro", command=self._reset).pack(side="right")
+        ttk.Button(footer, text="Open LLM-safe folder", command=self._open_output_folder).pack(side="left")
+        ttk.Button(footer, text="New job", command=self._reset).pack(side="right")
 
     def _populate_report(self, errors: list[str], output_dir: str) -> None:
         redacted = sum(1 for s in self._spans if s.will_redact)
         kept = len(self._spans) - redacted
 
         lines = [
-            f"Documenti controllati : {len(self._files)}",
-            f"Dati trovati          : {len(self._spans)}",
-            f"Dati nascosti         : {redacted}",
-            f"Lasciati visibili     : {kept}",
+            f"Documents scanned : {len(self._files)}",
+            f"Findings          : {len(self._spans)}",
+            f"Anonymized        : {redacted}",
+            f"Kept visible      : {kept}",
             "",
-            f"Cartella da caricare nell'LLM: {core.safe_output_dir(output_dir)}",
+            f"LLM-safe folder: {core.safe_output_dir(output_dir)}",
             "",
-            "Carica nell'LLM solo i file dentro:",
+            "Upload only files inside:",
             f"  {core.SAFE_OUTPUT_SUBDIR}",
             "",
-            "I file di recupero e controllo sono separati in:",
+            "Mapping and audit files are separated in:",
             f"  {core.RESERVED_OUTPUT_SUBDIR}",
-            "Non caricare questa cartella nell'LLM: contiene dati originali e mapping.",
+            "Do not upload that folder to an LLM: it may contain original data.",
             "",
         ]
         if errors:
-            lines.append("Attenzione: alcuni documenti hanno dato errore:")
+            lines.append("Some documents produced errors:")
             lines.extend(f"  - {e}" for e in errors)
         else:
-            lines.append("Nessun errore riscontrato.")
+            lines.append("No errors.")
 
         self.text_report.config(state="normal")
         self.text_report.delete("1.0", "end")
@@ -956,7 +916,7 @@ class App(tk.Tk):
         self._preview_file = ""
         self._sort_col = None
         self._sort_reverse = False
-        self.label_preview_title.config(text="Anteprima: seleziona una riga")
+        self.label_preview_title.config(text="Preview: select a row")
         self._set_text(self.preview_original, "")
         self._set_text(self.preview_redacted, "")
         self.progress_var.set(0)

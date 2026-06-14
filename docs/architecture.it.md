@@ -42,10 +42,10 @@ Tkinter riduce le dipendenze e permette di avviare l'app con una normale install
 
 ```text
 cartella risultati scelta/
-  01_DA_CARICARE_NELL_LLM/
+  01_LLM_SAFE_FILES/
     file .txt anonimizzati
 
-  99_RISERVATO_NON_CARICARE/
+  99_RESERVED_DO_NOT_UPLOAD/
     mapping_entities.csv
     mapping_entities.json
     index_occurrences.csv

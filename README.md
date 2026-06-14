@@ -1,38 +1,39 @@
 # Privacy Doc Anonymizer
 
-[Italiano](README.it.md)
+[Italian version](README.it.md)
 
 Local-first desktop app for anonymizing business documents before using them in LLM workflows.
 
-This portfolio project was inspired by OpenAI's release of [OpenAI Privacy Filter](https://openai.com/index/introducing-openai-privacy-filter/), an open-weight model for detecting and redacting personally identifiable information (PII) in text. The project turns that idea into a practical document workflow: local detection, human review, safe output folders, and reserved mapping files.
+This portfolio project was inspired by OpenAI's release of [OpenAI Privacy Filter](https://openai.com/index/introducing-openai-privacy-filter/), an open-weight model for detecting and redacting personally identifiable information (PII) in text. The project turns that technical direction into a practical workflow: local detection, human review, safe files for LLM use, and reserved mapping files kept separate.
 
 > Not affiliated with OpenAI. This is an independent educational and portfolio project.
 
-## Why it matters
+## What It Solves
 
-LLMs are increasingly useful for document analysis, but business documents often contain names, emails, phone numbers, addresses, fiscal identifiers, suppliers, customers, and account-like data.
+LLMs are useful for summarizing, classifying, and analyzing documents, but business files often contain names, emails, phone numbers, addresses, fiscal identifiers, suppliers, customers, and other sensitive references.
 
-This app helps create a safer workflow:
+Privacy Doc Anonymizer helps users work with documents more safely:
 
 1. Select local documents.
 2. Detect possible PII locally.
-3. Review each finding before saving.
-4. Export only anonymized files to a clearly marked LLM-safe folder.
-5. Keep mapping and audit files in a separate reserved folder.
+3. Review findings in a simple desktop interface.
+4. Save only anonymized text files in an LLM-safe folder.
+5. Keep mappings and audit files in a reserved folder that should not be uploaded.
 
-## Key features
+## Key Features
 
-- Desktop GUI built with Python and Tkinter.
-- Local PII detection using OpenAI Privacy Filter, with additional Italian-aware rules.
-- Human review step before output generation.
+- English-first desktop GUI built with Python and Tkinter.
+- Italian-aware detection rules for fiscal identifiers, VAT numbers, IBANs, addresses, and supplier/customer fields.
+- OpenAI Privacy Filter integration for model-based PII detection.
+- Human review step before saving anonymized copies.
 - Supported input formats: PDF, DOCX, XLSX, TXT, CSV, TSV.
-- Automatic detection of supplier/customer fields such as `Supplier`, `Fornitore`, `Client`, `Ragione sociale`.
-- Safe output separation:
-  - `01_DA_CARICARE_NELL_LLM`: anonymized files only.
-  - `99_RISERVATO_NON_CARICARE`: mapping, audit index, and processing log.
-- Consistent placeholders across files, for example `[PERSONA_1]`, `[EMAIL_1]`, `[ORGANIZZAZIONE_1]`.
-- Mapping export for controlled local re-identification.
+- Clear output separation:
+  - `01_LLM_SAFE_FILES`: anonymized files only.
+  - `99_RESERVED_DO_NOT_UPLOAD`: mapping, audit index, and processing log.
+- Consistent placeholders across files, for example `[PERSON_1]`, `[EMAIL_1]`, `[ORGANIZATION_1]`.
+- Mapping export for controlled local re-identification after LLM analysis.
 - Unit tests for redaction, Excel extraction, output separation, and supplier detection.
+- Bilingual documentation: English as the main project language, Italian for local users and context.
 
 ## Workflow
 
@@ -40,19 +41,21 @@ This app helps create a safer workflow:
 Original documents
         |
         v
-Local detection + Italian rules
+Local detection + Italian-aware rules
         |
         v
 Human review in the desktop GUI
         |
-        +--> 01_DA_CARICARE_NELL_LLM
+        +--> 01_LLM_SAFE_FILES
         |       anonymized .txt files
         |
-        +--> 99_RISERVATO_NON_CARICARE
+        +--> 99_RESERVED_DO_NOT_UPLOAD
                 mapping, audit index, processing log
 ```
 
-## Quick start
+## Quick Start
+
+Windows:
 
 ```powershell
 py -m venv .venv
@@ -60,11 +63,11 @@ py -m venv .venv
 py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
 py -m pip install -r requirements-opf.txt
-py verifica_ambiente.py
+py check_environment.py
 py gui.py
 ```
 
-On macOS/Linux:
+macOS/Linux:
 
 ```bash
 python -m venv .venv
@@ -72,13 +75,15 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-opf.txt
-python verifica_ambiente.py
+python check_environment.py
 python gui.py
 ```
 
-## Demo data
+If OpenAI Privacy Filter is not installed, the app will clearly explain what dependency is missing.
 
-The `examples/synthetic/` folder contains synthetic files only. Do not commit real documents, invoices, reports, spreadsheets, or generated mapping files.
+## Demo Data
+
+The `examples/synthetic/` folder contains synthetic files only. Do not commit real documents, invoices, reports, spreadsheets, generated outputs, mapping files, or screenshots containing personal data.
 
 ## Tests
 
@@ -88,19 +93,19 @@ python -m unittest discover -s tests -v
 
 The GitHub Actions workflow runs the unit tests on push and pull request.
 
-## Privacy and safety notes
+## Privacy And Safety Notes
 
 This project is designed as a privacy-by-design workflow aid, not as a legal guarantee of anonymization.
 
 Important rules:
 
-- Upload to an LLM only files from `01_DA_CARICARE_NELL_LLM`.
-- Never upload `99_RISERVATO_NON_CARICARE`.
+- Upload to an LLM only files from `01_LLM_SAFE_FILES`.
+- Never upload `99_RESERVED_DO_NOT_UPLOAD`.
 - Always review findings manually before sharing documents.
 - Use synthetic files in the public repository.
 - Do not treat model output as compliance certification.
 
-OpenAI notes that Privacy Filter is one component in a broader privacy-by-design system and that human review remains important in sensitive settings. This app follows that framing by keeping a manual review step and separating safe files from reserved mapping files.
+OpenAI describes Privacy Filter as one component in a broader privacy-by-design system. This app follows that framing by keeping a manual review step and separating LLM-safe files from reserved re-identification files.
 
 ## Documentation
 
@@ -109,11 +114,9 @@ OpenAI notes that Privacy Filter is one component in a broader privacy-by-design
 - [Roadmap](docs/roadmap.en.md)
 - [Italian documentation](README.it.md)
 
-## Project status
+## Portfolio Focus
 
-Portfolio project / working prototype.
-
-The goal is to demonstrate product thinking, privacy-aware AI workflows, Python desktop development, document processing, and testable engineering practices.
+This project demonstrates product thinking, privacy-aware AI workflows, local document processing, Python desktop development, user-centered interface design, and testable engineering practices.
 
 ## License
 

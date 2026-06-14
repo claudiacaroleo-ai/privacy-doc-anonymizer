@@ -10,11 +10,11 @@ import core
 class CoreRedactionTests(unittest.TestCase):
     def test_partial_overlap_is_merged_without_corrupting_text(self):
         spans = [
-            core.Span("a.txt", "private_person", "cdefg", 2, 7, None, True, "PERSONA_1"),
-            core.Span("a.txt", "private_person", "fghi", 5, 9, None, True, "PERSONA_2"),
+            core.Span("a.txt", "private_person", "cdefg", 2, 7, None, True, "PERSON_1"),
+            core.Span("a.txt", "private_person", "fghi", 5, 9, None, True, "PERSON_2"),
         ]
 
-        self.assertEqual(core.preview_redacted_text("abcdefghij", spans), "ab[PERSONA_1]j")
+        self.assertEqual(core.preview_redacted_text("abcdefghij", spans), "ab[PERSON_1]j")
 
     def test_mapping_uses_only_redacted_spans_by_default(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -34,8 +34,8 @@ class CoreRedactionTests(unittest.TestCase):
             reserved_dir = output_dir / core.RESERVED_OUTPUT_SUBDIR
             safe_dir = output_dir / core.SAFE_OUTPUT_SUBDIR
 
-            self.assertTrue((safe_dir / "input_txt_anonimo.txt").exists())
-            self.assertFalse((output_dir / "input_txt_anonimo.txt").exists())
+            self.assertTrue((safe_dir / "input_txt_anonymized.txt").exists())
+            self.assertFalse((output_dir / "input_txt_anonymized.txt").exists())
 
             mapping = json.loads((reserved_dir / "mapping_entities.json").read_text(encoding="utf-8"))
             self.assertEqual(len(mapping), 1)
@@ -55,11 +55,11 @@ class CoreRedactionTests(unittest.TestCase):
         registry = core.build_entity_registry(spans)
 
         self.assertEqual(len(registry), 1)
-        self.assertEqual(spans[0].codice, spans[1].codice)
+        self.assertEqual(spans[0].code, spans[1].code)
 
     def test_output_name_keeps_extension_to_avoid_collision(self):
-        self.assertTrue(core._output_path_for("contratto.pdf", "out").endswith("contratto_pdf_anonimo.txt"))
-        self.assertTrue(core._output_path_for("contratto.docx", "out").endswith("contratto_docx_anonimo.txt"))
+        self.assertTrue(core._output_path_for("contract.pdf", "out").endswith("contract_pdf_anonymized.txt"))
+        self.assertTrue(core._output_path_for("contract.docx", "out").endswith("contract_docx_anonymized.txt"))
 
     def test_regex_validators_for_italian_identifiers(self):
         self.assertTrue(core._valid_piva("01114601006"))
@@ -95,9 +95,9 @@ class CoreRedactionTests(unittest.TestCase):
 
             text = core.extract_text(str(path))
 
-            self.assertIn("[Foglio: Clienti]", text)
+            self.assertIn("[Sheet: Clienti]", text)
             self.assertIn("Nome | Email", text)
-            self.assertIn("Riga 2: Nome: Mario Rossi | Email: mario.rossi@example.com", text)
+            self.assertIn("Row 2: Nome: Mario Rossi | Email: mario.rossi@example.com", text)
 
     def test_supplier_field_is_detected_automatically(self):
         spans = core._detect_context_spans(

@@ -23,15 +23,15 @@ LLM workspace
 Files inside:
 
 ```text
-01_DA_CARICARE_NELL_LLM/
+01_LLM_SAFE_FILES/
 ```
 
 These files contain placeholders such as:
 
 ```text
-[PERSONA_1]
+[PERSON_1]
 [EMAIL_1]
-[ORGANIZZAZIONE_1]
+[ORGANIZATION_1]
 ```
 
 ## Do not upload
@@ -39,7 +39,7 @@ These files contain placeholders such as:
 Files inside:
 
 ```text
-99_RISERVATO_NON_CARICARE/
+99_RESERVED_DO_NOT_UPLOAD/
 ```
 
 This folder may contain original values through mapping and audit files.

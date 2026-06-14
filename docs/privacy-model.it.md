@@ -23,15 +23,15 @@ Ambiente LLM
 File dentro:
 
 ```text
-01_DA_CARICARE_NELL_LLM/
+01_LLM_SAFE_FILES/
 ```
 
 Questi file contengono placeholder come:
 
 ```text
-[PERSONA_1]
+[PERSON_1]
 [EMAIL_1]
-[ORGANIZZAZIONE_1]
+[ORGANIZATION_1]
 ```
 
 ## Non caricare
@@ -39,7 +39,7 @@ Questi file contengono placeholder come:
 File dentro:
 
 ```text
-99_RISERVATO_NON_CARICARE/
+99_RESERVED_DO_NOT_UPLOAD/
 ```
 
 Questa cartella puo contenere valori originali tramite mapping e file di audit.
