@@ -119,9 +119,11 @@ def _format_cell_value(value) -> str:
 
 
 _XLSX_CONTEXT_HEADERS = re.compile(
-    r"\b(fornitore|vendor|cliente|ragione\s+sociale|azienda|ditta|societ[aà]|"
-    r"nome|cognome|email|mail|telefono|cellulare|indirizzo|p\.?\s*iva|"
-    r"partita\s+iva|codice\s+fiscale|iban)\b",
+    r"\b(supplier|vendor|customer|client|company|organization|entity|business\s+name|"
+    r"fornitore|cliente|ragione\s+sociale|azienda|ditta|societ[aà]|"
+    r"contact|name|first\s+name|last\s+name|nome|cognome|"
+    r"email|mail|phone|mobile|telefono|cellulare|address|indirizzo|"
+    r"vat|tax\s+id|fiscal\s+id|p\.?\s*iva|partita\s+iva|codice\s+fiscale|iban)\b",
     re.IGNORECASE,
 )
 
@@ -188,6 +190,34 @@ def _read_xlsx(path: str) -> str:
     return "\n".join(parts)
 
 
+def _read_delimited(path: str, delimiter: str) -> str:
+    text = _read_text(path)
+    rows = list(csv.reader(text.splitlines(), delimiter=delimiter))
+    if not rows:
+        return ""
+
+    headers = [_format_cell_value(value) for value in rows[0]]
+    has_header = _looks_like_header(headers)
+    output: list[str] = []
+    if has_header:
+        output.append(" | ".join(headers))
+        data_rows = rows[1:]
+    else:
+        data_rows = rows
+        headers = []
+
+    for row_number, row in enumerate(data_rows, start=2 if has_header else 1):
+        values = [_format_cell_value(value) for value in row]
+        while values and not values[-1]:
+            values.pop()
+        if not any(values):
+            continue
+        formatted = _format_xlsx_row(values, headers if has_header else None, row_number)
+        if formatted:
+            output.append(formatted)
+    return "\n".join(output)
+
+
 def _read_text(path: str) -> str:
     for enc in ("utf-8", "utf-8-sig", "cp1252", "utf-16", "latin-1"):
         try:
@@ -206,7 +236,11 @@ def extract_text(path: str) -> str:
         return _read_docx(path)
     if ext == ".xlsx":
         return _read_xlsx(path)
-    if ext in {".txt", ".csv", ".tsv"}:
+    if ext == ".csv":
+        return _read_delimited(path, ",")
+    if ext == ".tsv":
+        return _read_delimited(path, "\t")
+    if ext == ".txt":
         return _read_text(path)
     raise ValueError(f"Unsupported format: {ext}")
 
@@ -319,7 +353,8 @@ _REGEX_LABEL_PRIORITY = {
 
 _CONTEXT_ORG_RE = re.compile(
     r"(?im)\b("
-    r"fornitore|vendor|ragione\s+sociale|azienda|ditta|societ[aà]|cliente"
+    r"supplier|vendor|customer|client|company|organization|entity|business\s+name|"
+    r"fornitore|ragione\s+sociale|azienda|ditta|societ[aà]|cliente"
     r")\s*[:=\-]\s*(?P<value>[^\n\r|;]{2,120})"
 )
 
@@ -349,6 +384,29 @@ def normalize_entity_text(label: str, text: str) -> str:
     if label == "private_id":
         return re.sub(r"[\s./-]", "", value).upper()
     return value.casefold()
+
+
+_OPF_LABEL_ALIASES = {
+    "account_number": "private_id",
+    "bank_account": "private_id",
+    "credit_card": "private_id",
+    "fiscal_id": "private_id",
+    "iban": "private_id",
+    "id_number": "private_id",
+    "tax_id": "private_id",
+    "vat_number": "private_id",
+    "private_account_number": "private_id",
+    "private_bank_account": "private_id",
+    "private_credit_card": "private_id",
+    "private_fiscal_id": "private_id",
+    "private_iban": "private_id",
+    "private_tax_id": "private_id",
+    "private_vat_number": "private_id",
+}
+
+
+def canonical_label(label: str) -> str:
+    return _OPF_LABEL_ALIASES.get(label, label)
 
 
 def _is_excluded(span: Span, exclude_terms: set[str]) -> bool:
@@ -435,7 +493,8 @@ def _detect_regex_spans(
 def _clean_context_value(value: str) -> str:
     value = value.strip(" \t:-=;|")
     value = re.split(
-        r"\s+(?:P\.?\s*IVA|Partita\s+IVA|Codice\s+fiscale|CF|Email|Mail|Telefono|Tel\.?|IBAN|Indirizzo)\s*[:=\-]",
+        r"\s+(?:VAT(?:\s+number)?|Tax\s+ID|Fiscal\s+ID|P\.?\s*IVA|Partita\s+IVA|"
+        r"Codice\s+fiscale|CF|Email|Mail|Phone|Mobile|Telefono|Tel\.?|IBAN|Address|Indirizzo)\s*[:=\-]",
         value,
         maxsplit=1,
         flags=re.IGNORECASE,
@@ -482,7 +541,7 @@ def _load_model():
 
 
 def _source_priority(source: str) -> int:
-    return {"manual": 4, "regex": 3, "opf": 2, "merged": 1}.get(source, 0)
+    return {"manual": 4, "regex": 3, "context": 3, "opf": 2, "merged": 1}.get(source, 0)
 
 
 def _span_rank(span: Span) -> tuple[int, float, int]:
@@ -491,6 +550,25 @@ def _span_rank(span: Span) -> tuple[int, float, int]:
         span.score if span.score is not None else 0.0,
         span.end - span.start,
     )
+
+
+def _trim_detected_bounds(text: str, start: int, end: int) -> tuple[int, int, str]:
+    while start < end and text[start] in " \t\r\n,;|":
+        start += 1
+    while end > start and text[end - 1] in " \t\r\n,;|":
+        end -= 1
+    return start, end, text[start:end].strip()
+
+
+def _append_with_overlap_priority(spans: list[Span], candidate: Span) -> None:
+    overlaps = [s for s in spans if _ranges_overlap(candidate.start, candidate.end, s.start, s.end)]
+    if not overlaps:
+        spans.append(candidate)
+        return
+    if all(_span_rank(candidate) > _span_rank(existing) for existing in overlaps):
+        for existing in overlaps:
+            spans.remove(existing)
+        spans.append(candidate)
 
 
 def dedupe_spans(spans: list[Span]) -> list[Span]:
@@ -540,34 +618,34 @@ def detect_spans(
                 score = getattr(s, "score", None)
                 if min_score is not None and score is not None and score < min_score:
                     continue
+                start, end, detected_text = _trim_detected_bounds(text, s.start, s.end)
+                if not detected_text:
+                    continue
+                label = canonical_label(s.label)
                 span = Span(
                     file=basename,
-                    label=s.label,
-                    text=s.text.strip(),
-                    start=s.start,
-                    end=s.end,
+                    label=label,
+                    text=detected_text,
+                    start=start,
+                    end=end,
                     score=score,
-                    will_redact=(s.label in labels_filter),
+                    will_redact=(label in labels_filter),
                     source="opf",
                 )
-                if s.label == "private_address":
+                if label == "private_address":
                     span = _refine_address_span(span)
                 if _is_excluded(span, exclusions):
                     span.will_redact = False
                 opf_spans.append(span)
 
-            # Add context/regex spans, skipping ranges already covered by OPF.
+            # Add context/regex spans, replacing lower-priority model spans where needed.
             context_spans = _detect_context_spans(text, basename, labels_filter, exclusions)
             for cs in context_spans:
-                overlaps_opf = any(_ranges_overlap(cs.start, cs.end, s.start, s.end) for s in opf_spans)
-                if not overlaps_opf:
-                    opf_spans.append(cs)
+                _append_with_overlap_priority(opf_spans, cs)
 
             regex_spans = _detect_regex_spans(text, basename, labels_filter, exclusions)
             for rs in regex_spans:
-                overlaps_opf = any(_ranges_overlap(rs.start, rs.end, s.start, s.end) for s in opf_spans)
-                if not overlaps_opf:
-                    opf_spans.append(rs)
+                _append_with_overlap_priority(opf_spans, rs)
 
             result.spans.extend(dedupe_spans(opf_spans))
         except Exception as exc:

@@ -99,6 +99,24 @@ class CoreRedactionTests(unittest.TestCase):
             self.assertIn("Nome | Email", text)
             self.assertIn("Row 2: Nome: Mario Rossi | Email: mario.rossi@example.com", text)
 
+    def test_csv_is_extracted_as_context_rich_text(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "suppliers.csv"
+            path.write_text(
+                "Supplier,Contact,Email,VAT\n"
+                "ACME Training Srl,Mario Rossi,mario.rossi@example.com,01114601006\n",
+                encoding="utf-8",
+            )
+
+            text = core.extract_text(str(path))
+
+            self.assertIn("Supplier | Contact | Email | VAT", text)
+            self.assertIn(
+                "Row 2: Supplier: ACME Training Srl | Contact: Mario Rossi | "
+                "Email: mario.rossi@example.com | VAT: 01114601006",
+                text,
+            )
+
     def test_supplier_field_is_detected_automatically(self):
         spans = core._detect_context_spans(
             "Fornitore: ACME Srl | P.IVA: 01114601006",
@@ -111,6 +129,22 @@ class CoreRedactionTests(unittest.TestCase):
         self.assertEqual(spans[0].label, "private_organization")
         self.assertEqual(spans[0].text, "ACME Srl")
         self.assertTrue(spans[0].will_redact)
+
+    def test_english_supplier_field_is_detected_automatically(self):
+        spans = core._detect_context_spans(
+            "Supplier: ACME Training Srl | VAT number: 01114601006",
+            "a.txt",
+            {"private_organization"},
+            set(),
+        )
+
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].label, "private_organization")
+        self.assertEqual(spans[0].text, "ACME Training Srl")
+        self.assertTrue(spans[0].will_redact)
+
+    def test_opf_account_number_maps_to_private_id(self):
+        self.assertEqual(core.canonical_label("account_number"), "private_id")
 
     def test_collect_unsupported_files_reports_ignored_extensions(self):
         with tempfile.TemporaryDirectory() as tmp:
