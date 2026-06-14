@@ -1,0 +1,10 @@
+Invoice number: INV-2026-001
+Supplier: ACME Training Srl
+VAT number: 01114601006
+Contact: Mario Rossi
+Email: mario.rossi@example.com
+Phone: +39 333 1234567
+Address: Via Roma 12, 10100 Torino
+
+Service: AI training session
+Amount: 1,200 EUR

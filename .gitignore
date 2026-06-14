@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local inputs, outputs, and sensitive generated files
+input/
+inputs/
+output/
+outputs/
+work/
+01_DA_CARICARE_NELL_LLM/
+02_RISPOSTE_LLM/
+03_RISULTATI_RIPRISTINATI_NON_CARICARE/
+99_RISERVATO_NON_CARICARE/
+mapping_entities.*
+index_occurrences.csv
+processing_log.txt
+
+# Real documents should never be committed
+*.pdf
+*.docx
+*.xlsx
+*.xls
+*.xlsm
+*.rtf
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+
+# Allow safe synthetic examples
+!examples/
+!examples/synthetic/
+!examples/synthetic/*.txt
+!examples/synthetic/*.csv
+
+# Local notes / generated draft from earlier iterations
+README_MIGLIORIE.md
